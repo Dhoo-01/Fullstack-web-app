@@ -1,0 +1,90 @@
+import { Hono } from 'hono'
+
+const app = new Hono()
+
+type Todo = {
+  id: number
+  title: string
+  completed: boolean
+}
+
+let todos: Todo[] = []
+
+app.get('/todos', (c) => {
+  return c.json(todos)
+})
+
+app.post('/todos', async (c) => {
+  const body = await c.req.json()
+  const newTodo: Todo = {
+    id: Date.now(),
+    title: body.title,
+    completed: false,
+  }
+  todos.push(newTodo)
+  return c.json(newTodo, 201)
+})
+
+app.get('/todos/:id', (c) => {
+  const id = Number(c.req.param('id'))
+  const todo = todos.find(t => t.id === id)
+  if (!todo) return c.notFound()
+  return c.json(todo)
+})
+
+app.put('/todos/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  const index = todos.findIndex(t => t.id === id)
+  if (index === -1) return c.notFound()
+  const body = await c.req.json()
+  todos[index] = { ...todos[index], ...body }
+  return c.json(todos[index])
+})
+
+app.delete('/todos/:id', (c) => {
+  const id = Number(c.req.param('id'))
+  todos = todos.filter(t => t.id !== id)
+  return c.body(null, 204)
+})
+
+export default app
+
+
+contoh dengan try catch
+import { Context } from 'hono'
+
+export const createNote = async (c: Context) => {
+  try {
+    const body = await c.req.json()
+
+    if (!body.title) {
+      return c.json({ status: 'fail', message: 'Title is required' }, 400)
+    }
+
+    const note = {
+      id: crypto.randomUUID(),
+      title: body.title,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      tags: body.tags || [],
+      body: body.body || ''
+    }
+
+    // Simpan ke array notes (anggap ada)
+    // notes.push(note)
+
+    return c.json({
+      status: 'success',
+      message: 'Note created',
+      data: note
+    }, 201)
+
+  } catch (err) {
+    console.error('Error in createNote:', err)
+    return c.json({
+      status: 'error',
+      message: 'Internal server error',
+      error: (err as Error).message
+    }, 500)
+  }
+}
